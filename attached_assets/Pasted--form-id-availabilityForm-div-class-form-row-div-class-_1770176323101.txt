@@ -1,0 +1,79 @@
+<form id="availabilityForm">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="fullName">Full Name</label>
+      <input 
+        type="text" 
+        id="fullName"
+        name="fullName" 
+        placeholder="John Doe" 
+        required
+      >
+    </div>
+    
+    <div class="form-group">
+      <label for="phone">Phone Number</label>
+      <input 
+        type="tel" 
+        id="phone"
+        name="phone" 
+        placeholder="(555) 123-4567" 
+        required
+      >
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email Address</label>
+    <input 
+      type="email" 
+      id="email"
+      name="email" 
+      placeholder="john@example.com" 
+      required
+    >
+  </div>
+
+  <div class="form-group">
+    <label for="address">Service Address</label>
+    <input 
+      type="text" 
+      id="address"
+      name="address" 
+      placeholder="123 Main St, Houston, TX 77001" 
+      required
+    >
+  </div>
+
+  <div class="form-group">
+    <label for="plan">Interested Plan</label>
+    <select id="plan" name="plan" required>
+      <option value="">Select a plan</option>
+      <option value="500 Mbps - $79.99/mo">500 Mbps - $79.99/mo</option>
+      <option value="700 Mbps - $99.99/mo">700 Mbps - $99.99/mo (Most Popular)</option>
+      <option value="1 Gig - $149.99/mo">1 Gig - $149.99/mo</option>
+    </select>
+  </div>
+
+  <button type="submit" class="submit-btn">
+    <span class="btn-text">Check Availability</span>
+    <span class="btn-loading" style="display: none;">Checking...</span>
+  </button>
+
+  <p class="form-disclaimer">
+    By submitting this form, you agree to receive calls or texts from Blue Mogul Fiber.
+  </p>
+</form>
+
+<!-- Success message (hidden by default) -->
+<div id="successMessage" style="display: none;">
+  <h3>✅ Thank You!</h3>
+  <p>We received your request and will contact you within 30 minutes to check availability at your address.</p>
+  <p>You can also call us now at <a href="tel:3463095514">(346) 309-5514</a></p>
+</div>
+
+<!-- Error message (hidden by default) -->
+<div id="errorMessage" style="display: none;">
+  <h3>⚠️ Oops!</h3>
+  <p>There was an error submitting your request. Please call us directly at <a href="tel:3463095514">(346) 309-5514</a></p>
+</div>

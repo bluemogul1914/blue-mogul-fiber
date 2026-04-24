@@ -1,0 +1,107 @@
+// api/create-lead.js
+// Serverless function to create UISP leads from website form
+
+export default async function handler(req, res) {
+  // Enable CORS for your website
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      success: false,
+      error: 'Method not allowed' 
+    });
+  }
+
+  try {
+    // Get form data
+    const { fullName, phone, email, address, plan } = req.body;
+
+    // Validate required fields
+    if (!fullName || !phone || !email || !address) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Parse name
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Parse address (basic - handles most formats)
+    const addressParts = address.split(',').map(s => s.trim());
+    const street = addressParts[0] || '';
+    const city = addressParts[1] || 'Houston';
+    const stateZip = addressParts[2] || 'TX 77001';
+    
+    // Extract state and zip
+    const stateZipMatch = stateZip.match(/([A-Z]{2})\s*(\d{5})/);
+    const state = stateZipMatch ? stateZipMatch[1] : 'TX';
+    const zipCode = stateZipMatch ? stateZipMatch[2] : '';
+
+    // Format phone (remove non-digits)
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    // Prepare UISP lead data
+    const leadData = {
+      firstName: firstName,
+      lastName: lastName,
+      companyName: null,
+      email: email,
+      phone: cleanPhone,
+      street1: street,
+      city: city,
+      state: state,
+      zipCode: zipCode,
+      countryCode: 'US',
+      leadSourceId: parseInt(process.env.LEAD_SOURCE_ID) || 1,
+      note: `Interested Plan: ${plan || 'Not specified'}\nService Address: ${address}\n\nSubmitted via website: ${new Date().toLocaleString()}`
+    };
+
+    console.log('Creating lead in UISP:', leadData);
+
+    // Call UISP API
+    const uispResponse = await fetch(`${process.env.UISP_URL}/api/v1.0/clients/leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-App-Key': process.env.UISP_API_KEY
+      },
+      body: JSON.stringify(leadData)
+    });
+
+    // Check response
+    if (!uispResponse.ok) {
+      const errorText = await uispResponse.text();
+      console.error('UISP API Error:', errorText);
+      throw new Error(`UISP API returned ${uispResponse.status}`);
+    }
+
+    const leadResult = await uispResponse.json();
+    console.log('Lead created successfully:', leadResult.id);
+
+    // Return success
+    return res.status(200).json({
+      success: true,
+      message: 'Lead created successfully',
+      leadId: leadResult.id
+    });
+
+  } catch (error) {
+    console.error('Error creating lead:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to create lead. Please try again or call us.',
+      details: error.message
+    });
+  }
+}

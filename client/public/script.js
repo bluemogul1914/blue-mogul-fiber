@@ -1,0 +1,101 @@
+// script.js
+
+// Form submission handler
+document.getElementById('availabilityForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  // Get form elements
+  const form = this;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoading = submitBtn.querySelector('.btn-loading');
+  const successMsg = document.getElementById('successMessage');
+  const errorMsg = document.getElementById('errorMessage');
+  
+  // Hide previous messages
+  successMsg.style.display = 'none';
+  errorMsg.style.display = 'none';
+  
+  // Show loading state
+  btnText.style.display = 'none';
+  btnLoading.style.display = 'inline';
+  submitBtn.disabled = true;
+  
+  // Get form data
+  const formData = new FormData(form);
+  const data = {
+    fullName: formData.get('fullName'),
+    phone: formData.get('phone'),
+    email: formData.get('email'),
+    address: formData.get('address'),
+    plan: formData.get('plan')
+  };
+  
+  console.log('Submitting form data:', data);
+  
+  try {
+    // Send to serverless function
+    const response = await fetch('/api/create-lead', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    if (result.success) {
+      // Success!
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+      
+      // Scroll to success message
+      successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Optional: Track conversion in Google Analytics
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'form_submit', {
+          'event_category': 'Lead',
+          'event_label': data.plan
+        });
+      }
+      
+      // Optional: Facebook Pixel
+      if (typeof fbq !== 'undefined') {
+        fbq('track', 'Lead', {
+          content_name: data.plan
+        });
+      }
+      
+    } else {
+      throw new Error(result.error || 'Unknown error');
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+    errorMsg.style.display = 'block';
+    errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } finally {
+    // Reset button state
+    btnText.style.display = 'inline';
+    btnLoading.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+});
+
+// Phone number formatting (optional but nice)
+document.getElementById('phone').addEventListener('input', function(e) {
+  let value = e.target.value.replace(/\D/g, '');
+  if (value.length > 0) {
+    if (value.length <= 3) {
+      value = `(${value}`;
+    } else if (value.length <= 6) {
+      value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+    } else {
+      value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+    }
+  }
+  e.target.value = value;
+});
